@@ -1,0 +1,2055 @@
+"use client";
+
+import React, { 
+  useMemo, 
+  useState, 
+  createContext, 
+  useContext, 
+  ReactNode, 
+  SetStateAction, 
+  ReactElement, // 'icon' の型
+  HTMLAttributes,
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  TextareaHTMLAttributes,
+  Dispatch, // SetStateAction の型
+  JSXElementConstructor, // cloneElement ため
+  useRef,
+  useEffect
+} from 'react';
+
+// =================== Icons (型定義済み) ===================
+const HomeIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2 7-7 7 7 2 2M5 10v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1"/></svg>);
+const BookIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>);
+const SparklesIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>);
+const ChatIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M8 10h8m-8 4h5M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 7l-4-4H9"/></svg>);
+const DashIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 3h7v4h-7v-4z"/></svg>);
+const StarIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.802 2.036a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.802-2.036a1 1 0 00-1.175 0l-2.802 2.036c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.93 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>);
+const BellIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>);
+const CheckCircleIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>);
+const ExclamationCircleIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>);
+const FolderIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>);
+const FileIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-4V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"/></svg>);
+const ClockIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clipRule="evenodd"/></svg>);
+const ChevronRightIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"/></svg>);
+const SendIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009.586 16.5V11a1 1 0 112 0v5.5a1 1 0 00.709.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>);
+const InboxIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>);
+const UsersIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0117 17h-4.07zM6 12a5 5 0 015 5v0H1a5 5 0 015-5z" /></svg>);
+const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>);
+const PersonIcon = (props: React.SVGProps<SVGSVGElement>) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>);
+
+
+// =================== Primitives (shadcn/ui Dummies) ===================
+
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+  className?: string;
+}
+const Card = ({ children, className='', ...props }: CardProps) => (<div className={`border rounded-2xl shadow-sm ${className.includes('bg-') ? '' : 'bg-white'} ${className}`} {...props}>{children}</div>);
+
+interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+  className?: string;
+}
+const CardHeader = ({ children, className='' }: CardHeaderProps) => (<div className={`p-5 ${className}`}>{children}</div>);
+
+interface CardContentProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+  className?: string;
+}
+const CardContent = ({ children, className='' }: CardContentProps) => (<div className={`p-5 pt-0 ${className}`}>{children}</div>);
+
+type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'link';
+type ButtonSize = 'md' | 'sm';
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children: ReactNode;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+}
+
+const Button = ({ children, variant='primary', size='md', className='', ...props }: ButtonProps) => {
+  const v: Record<ButtonVariant, string> = { primary:'bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-400', outline:'border border-gray-300 hover:bg-gray-50', ghost:'text-gray-700 hover:bg-gray-50', link:'text-indigo-700 hover:underline bg-transparent' };
+  const s: Record<ButtonSize, string> = { md:'h-10 px-4 text-sm rounded-lg', sm:'h-8 px-3 text-xs rounded-md' };
+  return <button className={`inline-flex items-center justify-center ${v[variant]} ${s[size]} font-medium transition ${className}`} {...props}>{children}</button>;
+};
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  className?: string;
+}
+const Input = ({ className='', ...props }: InputProps) => (<input className={`w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${className}`} {...props}/>);
+
+interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  className?: string;
+}
+const Textarea = ({ className='', ...props }: TextareaProps) => (<textarea className={`w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${className}`} {...props}/>);
+
+// =================== Tabs ===================
+
+interface TabsContextType {
+  value: string;
+  onChange: (value: string) => void;
+}
+const TabsCtx = createContext<TabsContextType>({ value: '', onChange: () => {} });
+const Tabs = ({ value, onChange, children }: { value: string, onChange: (v: string) => void, children: ReactNode }) => (<TabsCtx.Provider value={{ value, onChange }}>{children}</TabsCtx.Provider>);
+const TabList = ({ children, className='' }: { children: ReactNode, className?: string }) => (<div className={`flex gap-1 border-b bg-white/80 backdrop-blur px-4 sticky top-16 z-10 ${className}`}>{children}</div>);
+
+// 「ひとこと」画面用のタブコンポーネントを別途定義
+interface VoiceTabsContextType {
+  value: string;
+  onChange: (value: string) => void;
+}
+const VoiceTabsCtx = createContext<VoiceTabsContextType>({ value: '', onChange: () => {} });
+const VoiceTabs = ({ value, onChange, children }: { value: string, onChange: (v: string) => void, children: ReactNode }) => (<VoiceTabsCtx.Provider value={{ value, onChange }}>{children}</VoiceTabsCtx.Provider>);
+const VoiceTabList = ({ children, className='' }: { children: ReactNode, className?: string }) => (<div className={`grid grid-cols-3 sm:grid-cols-5 gap-1 sm:gap-2 ${className}`}>{children}</div>);
+const VoiceTab = ({ value, children, className='' }: { value: string, children: ReactNode, className?: string }) => { const { value: v, onChange } = useContext(VoiceTabsCtx); const active = v === value; return (<button onClick={()=>onChange(value)} className={`px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all truncate ${className}`}>{children}</button>); };
+/* ▼▼▼ [修正] w-full を追加し、タブ切り替えで幅が変わらないようにする ▼▼▼ */
+const VoiceTabPanel = ({ when, children }: { when: string, children: ReactNode }) => { const { value } = useContext(VoiceTabsCtx); return value === when ? <div className="mt-4 w-full">{children}</div> : null; };
+const Tab = ({ value, children, className='' }: { value: string, children: ReactNode, className?: string }) => { const { value: v, onChange } = useContext(TabsCtx); const active = v === value; return (<button onClick={()=>onChange(value)} className={`flex items-center justify-center gap-2 px-4 h-12 text-sm border-b-2 -mb-px ${active? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-600 hover:text-gray-800'} ${className}`}>{children}</button>); };
+/* ▼▼▼ [修正] 根本的なスクロール問題の解消。flex-1 で高さを確保しつつ、overflow-auto で中身をスクロールさせる ▼▼▼ */
+const TabPanel = ({ when, children }: { when: string, children: ReactNode }) => { const { value } = useContext(TabsCtx); return value === when ? <div className="flex-1 flex flex-col min-h-0 p-4 sm:p-6 overflow-auto">{children}</div> : null; };
+
+// =================== Modal ===================
+interface ModalProps {
+  open: boolean;
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}
+function Modal({ open, title, onClose, children }: ModalProps) { if (!open) return null; return (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="absolute inset-0 bg-black/40" onClick={onClose}/>
+    <div className="relative bg-white rounded-2xl shadow-2xl w-[92vw] max-w-2xl">
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="text-sm font-semibold">{title}</div>
+        <button className="text-gray-500 hover:text-gray-700" onClick={onClose}>×</button>
+      </div>
+      <div className="p-5 text-sm text-gray-800">{children}</div>
+    </div>
+  </div>
+);}
+
+// =================== Dummy Data (Mock) ===================
+
+interface KnowledgeFile {
+  id: number;
+  type: string;
+  title: string;
+  uploaded: string;
+  size: string;
+  important: boolean;
+  folderId: string;
+}
+interface KnowledgeFolder {
+  id: string;
+  name: string;
+  updated: string;
+}
+interface Notice {
+  id: string;
+  title: string;
+  body: string;
+  created: string;
+}
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+}
+interface Member {
+  id: string;
+  name: string;
+}
+interface PostReaction {
+  emoji: string;
+  count: number;
+  by: string[];
+}
+interface Post {
+  id: string;
+  authorId: string;
+  recipient: string | string[]; // ▼▼▼ [修正] 宛先を string[] も許容
+  text: string;
+  ts: number;
+  reactions: PostReaction[];
+  replied?: boolean; // INBOX_POSTS にのみ存在
+}
+
+const KNOWLEDGE: KnowledgeFile[] = [
+  { id:1, type:'PDF', title:'2025年冬期 新商品マニュアル', uploaded:'2025-10-28', size:'2.5MB', important:true, folderId: 'f1' },
+  { id:2, type:'PPTX', title:'秋キャンペーン共有会.pptx', uploaded:'2025-10-27', size:'8.2MB', important:true, folderId: 'f1' },
+  { id:3, type:'PDF', title:'衛生チェックリスト改定（店舗）', uploaded:'2025-10-25', size:'0.9MB', important:false, folderId: 'f2' },
+  { id:4, type:'PDF', title:'VMD週次アップデート_1025.pdf', uploaded:'2025-10-25', size:'5.1MB', important:false, folderId: 'f2' },
+  { id:5, type:'PDF', title:'新人研修ガイドv3', uploaded:'2025-10-22', size:'1.2MB', important:false, folderId: 'f3' },
+  { id:6, type:'PDF', title:'価格改定ポリシー（確定）', uploaded:'2025-10-19', size:'0.6MB', important:true, folderId: 'f2' },
+];
+const KNOWLEDGE_FOLDERS: KnowledgeFolder[] = [
+  { id: 'f1', name: '新商品・キャンペーン資料', updated: '2025-10-28' },
+  { id: 'f2', name: '店舗運営マニュアル', updated: '2025-10-25' },
+  { id: 'f3', name: '研修・オンボーディング', updated: '2025-10-22' },
+];
+const INITIAL_NOTICES: Notice[] = [ { id:'n1', title:'今週の重点接客ポイント', body:'テスター声かけは「お肌悩み→提案→拭き取り」。各自3回は声掛け。', created:'2025-10-29 09:00' } ];
+
+const USER: User = { id: 'you', name: '田中（店長）', avatar: 'https://placehold.co/40x40/B0B0B0/FFFFFF?text=店長' };
+
+const MEMBERS: Member[] = [ 
+  { id:'you', name:'田中（店長）' }, // ログインユーザー（店長）
+  { id:'sato', name:'佐藤' }, 
+  { id:'suzuki', name:'鈴木' }, 
+  { id:'yamaguchi', name:'山口' }, 
+  { id:'kimura', name:'木村' }, 
+  /* ▼▼▼ [修正] "全員体（掲示板）" を "全員" に修正 ▼▼▼ */
+  { id:'zen', name:'全員' } 
+];
+const NAME_MAP = new Map(MEMBERS.map(m=>[m.id,m.name]));
+const GET_NAME = (id: string)=> NAME_MAP.get(id)||id;
+
+const MY_POSTS: Post[] = [
+  { id:'m1', authorId:'you', recipient:'sato', text:'VMD棚替えの対応ありがとう！すごく良くなった。', ts: Date.parse('2025-10-28T11:00:00+09:00'), reactions: [{emoji: '👍', count: 1, by: ['sato']}] },
+  { id:'m2', authorId:'you', recipient:'zen', text:'月初ミーティングのアジェンダ共有', ts: Date.parse('2025-10-27T19:00:00+09:00'), reactions: [] },
+  { id:'m3', authorId:'you', recipient:'suzuki', text:'昨日のフォロー助かった、ありがとう！', ts: Date.parse('2025-10-29T11:10:00+09:00'), reactions: [{emoji: '😊', count: 1, by: ['suzuki']}]},
+  { id:'m4', authorId:'you', recipient:'kimura', text:'シフトの件、確認しました。', ts: Date.parse('2025-10-26T18:00:00+09:00'), reactions: [] },
+];
+const INBOX_POSTS: Post[] = [
+  { id:'i1', authorId:'suzuki', recipient:'you', text:'接客サポート助かりました！', ts: Date.parse('2025-10-27T09:00:00+09:00'), replied: true, reactions: [{emoji: '👍', count: 1, by: ['you']}] },
+  { id:'i2', authorId:'sato', recipient:'you', text:'ギフト包装の件、確認お願いします', ts: Date.parse('2025-10-28T19:20:00+09:00'), replied:false, reactions: [] },
+  { id:'i3', authorId:'kimura', recipient:'you', text:'シフト代行感謝です。', ts: Date.parse('2025-10-26T18:15:00+09:00'), replied: true, reactions: [] },
+  { id:'i4', authorId:'yamaguchi', recipient:'you', text:'明日の入り時間大丈夫そうですか？', ts: Date.parse('2025-10-27T14:00:00+09:00'), replied:false, reactions: [] },
+];
+const ALL_PUBLIC_POSTS: Post[] = [
+  { id:'e1', authorId:'sato', recipient:'zen', text:'テスター補充導線を改善しました', ts: Date.parse('2025-10-29T12:00:00+09:00'), reactions: [{emoji: '💡', count: 2, by: ['you', 'kimura']}] },
+  { id:'e2', authorId:'suzuki', recipient:'sato', text:'VMD棚替えの対応ありがとう！', ts: Date.parse('2025-10-28T10:30:00+09:00'), reactions: [{emoji: '😊', count: 1, by: ['sato']}] },
+  { id:'e3', authorId:'kimura', recipient:'yamaguchi', text:'ストック整理の件、了解です。', ts: Date.parse('2025-10-27T20:00:00+09:00'), reactions: [] },
+  { id:'e4', authorId:'sato', recipient:'suzuki', text:'フォローありがとう！', ts: Date.parse('2025-10-29T11:15:00+09:00'), reactions: [{emoji: '👍', count: 1, by: ['suzuki']}] },
+];
+
+const FMT = new Intl.DateTimeFormat("ja-JP",{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Tokyo'});
+const FORMAT_TS = (ts: number | Date)=> FMT.format(new Date(ts));
+
+
+// =================== カレンダー関連のデータ ===================
+
+// --- シフトデータ (日付string: [メンバーID, 時間string]) ---
+type ShiftData = Record<string, { m: string; t: string }[]>;
+const SHIFTS: ShiftData = {
+  "2025-11-03": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-15:00' }, { m: 'suzuki', t: '休み' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-04": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '休み' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-05": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '休み' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-06": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '休み' } ],
+  "2025-11-07": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '休み' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-08": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-09": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-10": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-15:00' }, { m: 'suzuki', t: '休み' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-11": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '休み' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-12": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '休み' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-13": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '休み' } ],
+  "2025-11-14": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '休み' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-15": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-16": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-17": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-15:00' }, { m: 'suzuki', t: '休み' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-18": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '休み' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-19": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '休み' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-20": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '休み' } ],
+  "2025-11-21": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '休み' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-22": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-23": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-24": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-15:00' }, { m: 'suzuki', t: '休み' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-25": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '休み' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-26": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '休み' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-27": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '休み' } ],
+  "2025-11-28": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '休み' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-29": [ { m: 'you', t: '9:00-18:00' }, { m: 'sato', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' }, { m: 'kimura', t: '12:00-21:00' } ],
+  "2025-11-30": [ { m: 'you', t: '9:00-18:00' }, { m: 'suzuki', t: '9:00-18:00' }, { m: 'yamaguchi', t: '11:00-20:00' } ],
+};
+
+// --- 終日イベントデータ ---
+interface AllDayEvent {
+  id: string;
+  title: string;
+  start: string; // YYYY-MM-DD
+  end: string;   // YYYY-MM-DD
+  color: string;
+}
+const ALL_DAY_EVENTS: AllDayEvent[] = [
+  { id: 'e1', title: '新商品A 発売日', start: '2025-11-05', end: '2025-11-05', color: 'bg-green-100 text-green-800' },
+  { id: 'e2', title: '週末WポイントCP', start: '2025-11-07', end: '2025-11-09', color: 'bg-indigo-100 text-indigo-800' },
+  { id: 'e3', title: '週末WポイントCP', start: '2025-11-14', end: '2025-11-16', color: 'bg-indigo-100 text-indigo-800' },
+  { id: 'e4', title: 'BLACK FRIDAY セール', start: '2025-11-28', end: '2025-11-30', color: 'bg-gray-800 text-white' },
+];
+
+// --- カレンダー定数 ---
+const GRID_START_HOUR = 8;
+const GRID_END_HOUR = 22;
+const timeSlots = Array.from({ length: (GRID_END_HOUR - GRID_START_HOUR) }, (_, i) => GRID_START_HOUR + i);
+
+// --- カレンダーUtility ---
+const getMemberColor = (memberId: string) => {
+  const colors = [
+    'bg-blue-100 border-blue-300 text-blue-800', 
+    'bg-purple-100 border-purple-300 text-purple-800',
+    'bg-pink-100 border-pink-300 text-pink-800',
+    'bg-amber-100 border-amber-300 text-amber-800',
+    'bg-teal-100 border-teal-300 text-teal-800',
+    'bg-gray-100 border-gray-300 text-gray-800'
+  ];
+  const index = MEMBERS.findIndex(m => m.id === memberId);
+  return colors[index % colors.length] || colors[5];
+};
+
+// YYYY-MM-DD 形式の文字列を返す
+// ▼▼▼ [修正] JST基準で日付を取得するように修正 (toISOString依存を削除) ▼▼▼
+const toDateString = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+// 週の開始日（月曜日）を取得
+const getWeekStart = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0); // JSTの0時0分0秒にリセット
+  const day = d.getDay(); // 0 (Sun) - 6 (Sat)
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // day=0(Sun)なら-6、day=1(Mon)なら+0
+  return new Date(d.setDate(diff));
+};
+
+// "9:00-18:00" -> { startHour: 9.0, endHour: 18.0 }
+const parseShiftTime = (time: string) => {
+  if (time === '休み') {
+    return { startHour: null, endHour: null, isOff: true };
+  }
+  const parts = time.split('-');
+  if (parts.length !== 2) {
+    return { startHour: null, endHour: null, isOff: false }; // 不明な形式
+  }
+  const [startStr, endStr] = parts;
+  const startHour = parseInt(startStr.split(':')[0], 10) + parseInt(startStr.split(':')[1] || '0', 10) / 60;
+  const endHour = parseInt(endStr.split(':')[0], 10) + parseInt(endStr.split(':')[1] || '0', 10) / 60;
+  return { startHour, endHour, isOff: false };
+};
+
+// ▼▼▼ [修正] この関数は使用されなくなりましたが、VoiceTrustV8Style のために残しておきます ▼▼▼
+const getShiftForMember = (date: Date, memberId: string) => {
+  const dateStr = toDateString(date);
+  const shifts = SHIFTS[dateStr as keyof ShiftData] || [];
+  const shift = shifts.find(s => s.m === memberId);
+  const time = shift ? shift.t : '休み'; // データがなければ休み
+ 
+  const { startHour, endHour, isOff } = parseShiftTime(time);
+ 
+  return {
+    memberId,
+    name: GET_NAME(memberId),
+    time,
+    startHour,
+    endHour,
+    isOff,
+  };
+};
+
+// 2つの日付が同じ日か
+const isSameDay = (d1: Date, d2: Date) => {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+};
+
+// =================== Root ===================
+export default function TsumugiApp(){
+  const [role, setRole] = useState('manager'); // 'staff' | 'manager'
+  const [tab, setTab] = useState('home');
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const tabs: [string, string, ReactElement<React.SVGProps<SVGSVGElement>>][] = role==='manager'
+    ? [['home','ホーム',<HomeIcon/>], ['calendar', 'カレンダー', <CalendarIcon/>], ['dashboard','ダッシュボード',<DashIcon/>],['voice','ひとこと',<ChatIcon/>],['knowledge','ナレッジ',<BookIcon/>],['integrations','連携',<SparklesIcon/>]]
+    : [['home','ホーム',<HomeIcon/>], ['calendar', 'カレンダー', <CalendarIcon/>], ['voice','ひとこと',<ChatIcon/>],['knowledge','ナレッジ',<BookIcon/>]];
+
+  const headerClass = role === 'manager'
+    ? "bg-gray-800 text-white" // 管理者用の色
+    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white"; // スタッフ用の色
+
+  return (
+    /* ▼▼▼ [根本修正] min-h-screen を h-screen overflow-hidden に変更 ▼▼▼ */
+    /* これによりページ全体がスクロールしなくなり、内部の sticky と flex-1 が正しく機能する */
+    <div className="h-screen overflow-hidden flex flex-col bg-gray-50">
+      <div className={`h-16 flex items-center justify-between px-4 sticky top-0 z-20 shadow-md ${headerClass}`}>
+        <div className="flex items-center gap-3">
+          <SparklesIcon className="w-8 h-8 opacity-90"/>
+          <div className="leading-tight">
+            <div className="text-lg font-extrabold tracking-tight">tsumugi</div>
+            <div className={`text-xs ${role === 'manager' ? 'text-gray-300' : 'text-indigo-100'} -mt-0.5`}>
+              {role === 'manager' ? '管理者モード（新宿店）' : '新宿店'}
+            </div>
+          </div>
+        </div>
+       
+        <div className="flex items-center gap-2">
+          <button className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 relative">
+            <BellIcon className="w-5 h-5"/>
+            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white"/>
+          </button>
+         
+          <div className="relative">
+            <button onClick={() => setMenuOpen(prev => !prev)} className="flex items-center gap-2 rounded-full border border-white/30 px-1.5 py-1.5 text-sm hover:bg-white/10">
+              <img className="w-7 h-7 rounded-full bg-gray-300" src={USER.avatar} alt={USER.name} />
+              <span className="font-medium pr-2 hidden sm:block">{USER.name}</span>
+            </button>
+           
+            <div className={`absolute right-0 mt-1 bg-white border rounded-xl shadow-lg w-48 p-2 text-gray-900 ${menuOpen ? 'block' : 'hidden'}`}>
+              <div className="p-2 text-xs text-gray-500">スタッフ一覧</div>
+            <div className="p-2 text-sm font-medium">{GET_NAME('suzuki')}</div>
+            <div className="p-2 text-sm font-medium">{GET_NAME('sato')}</div>
+              <div className="h-px bg-gray-100 my-1"></div>
+              <button onClick={()=>{ setRole(r=>r==='manager'?'staff':'manager'); setMenuOpen(false); setTab('home'); }} className="w-full text-left p-2 text-sm rounded-lg hover:bg-gray-100">
+                {role==='manager'?'スタッフ表示に切替':'管理表示に切替'}
+              </button>
+              <button onClick={() => setMenuOpen(false)} className="w-full text-left p-2 text-sm rounded-lg hover:bg-gray-100">ログアウト</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Tabs value={tab} onChange={setTab}>
+        <TabList className={`bg-white border-b shadow-sm px-1 sm:px-4 ${role === 'manager' ? 'border-gray-300' : 'border-indigo-100'}`}>
+          {tabs.map(([id,label,icon])=> {
+            const activeClass = role === 'manager' 
+              ? 'border-gray-700 text-gray-800' 
+              : 'border-indigo-600 text-indigo-700';
+            const inactiveClass = 'border-transparent text-gray-600 hover:text-gray-800';
+           
+            return (
+              <Tab key={id} value={id} className={`flex-1 sm:flex-initial ${tab === id ? activeClass : inactiveClass}`}>
+                <span className="flex items-center gap-1.5">
+                  {React.cloneElement(icon, { className: 'w-5 h-5' })}
+                  <span className="hidden sm:inline">{label}</span>
+                </span>
+              </Tab>
+            )
+          })}
+        </TabList>
+        <TabPanel when="home"><HomeDashboard role={role}/></TabPanel>
+        <TabPanel when="calendar"><CalendarView /></TabPanel> 
+        <TabPanel when="voice"><VoiceTrustV8Style role={role} /></TabPanel> 
+        <TabPanel when="knowledge"><KnowledgeBase role={role}/></TabPanel>
+        {role==='manager' && <TabPanel when="dashboard"><RelationshipDashboard/></TabPanel>}
+        {role==='manager' && <TabPanel when="integrations"><Integrations/></TabPanel>}
+      </Tabs>
+    </div>
+  );
+}
+
+// =================== Home (「開きたくなる」UI) ===================
+interface HomeDashboardProps {
+  role: string;
+}
+interface UnreadTask {
+  id: string;
+  type: string;
+  title: string;
+  due: string;
+  from: string;
+}
+interface Thank {
+  id: string;
+  from: string;
+  to: string;
+  text: string;
+}
+
+function HomeDashboard({ role }: HomeDashboardProps){
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeTarget, setNoticeTarget] = useState<Notice | null>(null);
+  const [notices] = useState<Notice[]>(INITIAL_NOTICES);
+
+  const unreadTasks: UnreadTask[] = [
+    { id: 't1', type: 'knowledge', title: '秋キャンペーン共有会.pptx', due: '本日中', from: '本部' },
+    { id: 't2', type: 'notice', title: '今週の重点接客ポイント', due: '本日中', from: GET_NAME('you') }, // 'tencho' -> 'you' に修正
+  ];
+ 
+  const thanks: Thank[] = [
+    { id: 'th1', from: 'sato', to: 'yamaguchi', text: '昨日のレジ締め代行、感謝です！' },
+    { id: 'th2', from: 'you', to: 'kimura', text: 'VMD変更、すごく良くなった！' },
+    { id: 'th3', from: 'sato', to: 'you', text: 'フォローありがとう！' }, 
+  ];
+
+  const openNotice = (n: Notice) => {
+    setNoticeTarget(n);
+    setNoticeOpen(true);
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+     
+      {/* --- メインカラム (2/3) --- */}
+      <div className="lg:col-span-2 space-y-6">
+       
+        {/* 1. あなた宛てのタスク */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="font-semibold text-lg text-gray-900">あなた宛ての確認事項（{unreadTasks.length}件）</div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {unreadTasks.map(task => (
+              <div key={task.id} className="flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer">
+                <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                  {task.type === 'knowledge' ? <BookIcon className="w-5 h-5"/> : <ExclamationCircleIcon className="w-5 h-5"/>}
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium text-sm">{task.title}</div>
+                  <div className="text-xs text-gray-500">From: {task.from} / 期限: {task.due}</div>
+                </div>
+                <Button variant="outline" size="sm">今すぐ確認</Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* 2. 必須ナレッジ（AI要約） */}
+        <Card>
+          <CardHeader>
+            <div className="font-semibold text-lg text-gray-900">今日の必須ナレッジ（AI要約）</div>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-purple-600"><StarIcon className="w-5 h-5"/></span>
+                <div className="font-semibold text-purple-800">2025年冬期 新商品マニュアル</div>
+              </div>
+              <div className="text-sm text-gray-700 space-y-1">
+                <p>1. <span className="font-bold">重要ポイント:</span> 新保湿成分「リピジュアEX」配合が最大の売りです。</p>
+                <p>2. <span className="font-bold">現場アクション:</span> 敏感肌のお客様には、まずテスターでの声かけを徹底してください。</p>
+                <p>3. <span className="font-bold">注意事項:</span> 既存の「モイストローション」とは併用せず、切り替えを推奨します。</p>
+              </div>
+              <Button size="sm" className="mt-3">ファイルを開く</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* --- サイドカラム (1/3) --- */}
+      <div className="space-y-6">
+        {/* 3. 称賛（ありがとう） */}
+        <Card>
+          <CardHeader>
+            <div className="font-semibold text-lg text-rose-700">最近の「ありがとう」👏</div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {thanks.map(t => (
+              <div key={t.id} className="p-3 bg-rose-50 rounded-lg">
+                <div className="flex items-center gap-2 text-xs text-rose-600 font-medium mb-1">
+                  <span>{GET_NAME(t.from)}</span>
+                  <span>→</span>
+                  <span>{GET_NAME(t.to)}</span>
+                </div>
+                <p className="text-sm text-gray-800">「{t.text}」</p>
+              </div>
+            ))}
+            <Button variant="outline" className="w-full">ありがとうを贈る</Button>
+          </CardContent>
+        </Card>
+
+        {/* 4. 店長メッセージ */}
+        <Card>
+          <CardHeader>
+            <div className="font-semibold text-lg text-gray-900">店長からのお知らせ</div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {notices.map(n => (
+              <div key={n.id} className="p-3 border rounded-xl bg-white hover:bg-gray-50 cursor-pointer" onClick={() => openNotice(n)}>
+                <div className="text-sm font-semibold text-gray-800">{n.title}</div>
+                <div className="text-xs text-gray-500">{n.created}</div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+     
+      <Modal open={noticeOpen} title={noticeTarget ? noticeTarget.title : ''} onClose={()=>setNoticeOpen(false)}>
+        <div className="whitespace-pre-line text-sm">{noticeTarget ? noticeTarget.body : ''}</div>
+      </Modal>
+    </div>
+  );
+}
+
+
+// =================== CalendarView (GCal風 UI) ===================
+
+// --- Main Component ---
+function CalendarView() {
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('week');
+  const [currentDate, setCurrentDate] = useState(new Date('2025-11-03T12:00:00+09:00')); // 11/3 (月) を基準
+  const today = useMemo(() => new Date('2025-11-03T12:00:00+09:00'), []); // 固定の今日
+
+  const goToPrev = () => {
+    setCurrentDate(prev => {
+      const d = new Date(prev);
+      if (viewMode === 'month') d.setMonth(d.getMonth() - 1);
+      if (viewMode === 'week') d.setDate(d.getDate() - 7);
+      if (viewMode === 'day') d.setDate(d.getDate() - 1);
+      return d;
+    });
+  };
+
+  const goToNext = () => {
+    setCurrentDate(prev => {
+      const d = new Date(prev);
+      if (viewMode === 'month') d.setMonth(d.getMonth() + 1);
+      if (viewMode === 'week') d.setDate(d.getDate() + 7);
+      if (viewMode === 'day') d.setDate(d.getDate() + 1);
+      return d;
+    });
+  };
+
+  const goToToday = () => {
+    setCurrentDate(today);
+  };
+ 
+  const getHeaderDateRange = () => {
+    const d = new Date(currentDate);
+    if (viewMode === 'month') {
+      return `${d.getFullYear()}年 ${d.getMonth() + 1}月`;
+    }
+    if (viewMode === 'week') {
+      const start = getWeekStart(d);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      const y = start.getFullYear();
+      const m1 = start.getMonth() + 1;
+      const d1 = start.getDate();
+      const m2 = end.getMonth() + 1;
+      const d2 = end.getDate();
+      if (m1 === m2) return `${y}年 ${m1}月${d1}日-${d2}日`;
+      return `${y}年 ${m1}月${d1}日-${m2}月${d2}日`;
+    }
+    if (viewMode === 'day') {
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const w = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
+      return `${y}年 ${m}月${day}日 (${w})`;
+    }
+  };
+ 
+  const ViewButton = ({ value, label }: { value: 'month' | 'week' | 'day', label: string }) => {
+    const isActive = viewMode === value;
+    return (
+      <button 
+        onClick={() => setViewMode(value)} 
+        className={`px-3 py-1.5 text-xs font-semibold rounded-md ${isActive ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border'}`}
+      >
+        {label}
+      </button>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-full min-h-[70vh]"> {/* カレンダー全体が高さを確保するように */}
+      <Card className="flex flex-col flex-1 min-h-0"> {/* カードも追従 */}
+        {/* --- Header --- */}
+        <CardHeader className="pb-0">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={goToToday}>今日</Button>
+              <button onClick={goToPrev} className="p-1 rounded-md hover:bg-gray-100 text-gray-600">
+                <ChevronRightIcon className="w-6 h-6 transform rotate-180" />
+              </button>
+              <button onClick={goToNext} className="p-1 rounded-md hover:bg-gray-100 text-gray-600">
+                <ChevronRightIcon className="w-6 h-6" />
+              </button>
+              <div className="text-xl font-semibold text-gray-800 ml-2">{getHeaderDateRange()}</div>
+            </div>
+            <div className="flex items-center gap-1 rounded-lg p-0.5">
+              <ViewButton value="month" label="月" />
+              <ViewButton value="week" label="週" />
+              <ViewButton value="day" label="日" />
+            </div>
+          </div>
+        </CardHeader>
+       
+        {/* --- Content --- */}
+        {/* flex-1 min-h-0 で中身がスクロール可能に */}
+        <CardContent className="pt-2 flex-1 min-h-0 flex flex-col"> 
+          {viewMode === 'month' && <MonthView currentDate={currentDate} today={today} />}
+          {viewMode === 'week' && <WeekViewGcal currentDate={currentDate} today={today} />}
+          {viewMode === 'day' && <DayViewGcal currentDate={currentDate} today={today} />}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// --- WeekViewGcal (Googleカレンダー風タイムグリッド・週) ---
+function WeekViewGcal({ currentDate, today }: { currentDate: Date, today: Date }) {
+  const weekStart = getWeekStart(currentDate);
+  const todayStr = toDateString(today);
+  const weekDays = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
+
+  // 終日イベントの計算
+  const weekEvents = ALL_DAY_EVENTS.filter(e => {
+    const start = new Date(e.start + 'T00:00:00+09:00');
+    const end = new Date(e.end + 'T00:00:00+09:00');
+    const weekEnd = new Date(weekDays[6]);
+    weekEnd.setHours(23, 59, 59); // 週の終わり
+    return start <= weekEnd && end >= weekDays[0];
+  });
+ 
+  // 終日イベントの行割り当て (簡易)
+  let maxAllDayRows = 0;
+  const allDayEventsWithRow = weekEvents.map(event => {
+    const start = new Date(event.start + 'T00:00:00+09:00');
+    const end = new Date(event.end + 'T00:00:00+09:00');
+   
+    let colStart = weekDays.findIndex(day => isSameDay(day, start));
+    if (colStart === -1 && start < weekDays[0]) colStart = 0; // 週をまたいで開始
+   
+    let colEnd = weekDays.findIndex(day => isSameDay(day, end));
+    if (colEnd === -1 && end > weekDays[6]) colEnd = 6; // 週をまたいで終了
+   
+    if (colStart === -1 || colEnd === -1) return null; // 範囲外
+   
+    const duration = colEnd - colStart + 1;
+    // TODO: 本来は行の重なりをチェックする
+    const row = 1; 
+    maxAllDayRows = Math.max(maxAllDayRows, row);
+   
+    return { ...event, colStart, duration, row };
+  }).filter(Boolean) as (AllDayEvent & { colStart: number, duration: number, row: number })[];
+ 
+  const allDayRowHeight = Math.max(1, maxAllDayRows) * 32 + 8; // 1行32px + padding
+
+  return (
+    <div className="h-full overflow-auto relative" style={{ minWidth: '800px' }}>
+      <div 
+        className="grid relative" 
+        style={{
+          gridTemplateColumns: '60px repeat(7, 1fr)', // Time Axis + 7 Days
+          gridTemplateRows: `auto auto repeat(${timeSlots.length}, 60px) auto` // Header + AllDay + Slots + Footer(dummy)
+        }}
+      >
+        {/* --- Row 1: Date Header --- */}
+        <div className="sticky top-0 z-20 bg-white border-b border-r" style={{ gridColumn: 1, gridRow: 1 }}>&nbsp;</div>
+        {weekDays.map((day, i) => (
+          <div 
+            key={i} 
+            className={`sticky top-0 z-20 bg-white border-b p-2 text-center ${i < 6 ? 'border-r' : ''} ${isSameDay(day, today) ? 'bg-indigo-50' : ''}`}
+            style={{ gridColumn: i + 2, gridRow: 1 }}
+          >
+            <div className="text-xs text-gray-500">{dayNames[i]}</div>
+            <div className={`text-2xl font-medium ${isSameDay(day, today) ? 'text-indigo-700' : 'text-gray-800'}`}>
+              {day.getDate()}
+            </div>
+          </div>
+        ))}
+       
+        {/* --- Row 2: All-Day --- */}
+        <div className="sticky top-[73px] z-20 bg-white border-b border-r text-right pr-2 pt-1 text-xs text-gray-400" style={{ gridColumn: 1, gridRow: 2, height: `${allDayRowHeight}px` }}>終日</div>
+        <div 
+          className="sticky top-[73px] z-20 bg-white col-span-7 border-b p-1 grid"
+          style={{ 
+            gridColumn: '2 / -1',
+            gridRow: 2,
+            height: `${allDayRowHeight}px`,
+            gridTemplateColumns: 'repeat(7, 1fr)',
+          }}
+        >
+          {allDayEventsWithRow.map(event => (
+            <div 
+              key={event.id}
+              className={`h-6 px-2 py-0.5 rounded text-xs font-medium overflow-hidden ${event.color} mx-0.5`}
+              style={{
+                gridColumn: `${event.colStart + 1} / span ${event.duration}`, // +1 (0-indexed -> 1-indexed)
+                top: `${(event.row - 1) * 28 + 4}px`,
+              }}
+            >
+              {event.title}
+            </div>
+          ))}
+        </div>
+       
+        {/* --- Rows 3+: Time Grid --- */}
+        {/* Time Axis (A3-A15) */}
+        {timeSlots.map((hour, hourIndex) => (
+            <React.Fragment key={hour}>
+            {/* Time Label */}
+            <div className="relative text-right pr-2 border-r -mt-2.5" style={{gridColumn: 1, gridRow: hourIndex + 3}}>
+                <span className="text-xs text-gray-400 sticky left-0">{hour}:00</span>
+              </div>
+            {/* Grid Cells (Empty) */}
+            {Array.from({ length: 7 }).map((_, dayIndex) => (
+                <div 
+                  key={dayIndex} 
+                  className={`border-b ${dayIndex < 6 ? 'border-r' : ''}`}
+                  style={{ gridColumn: dayIndex + 2, gridRow: hourIndex + 3 }}
+                >
+                  &nbsp;
+                </div>
+            ))}
+            </React.Fragment>
+        ))}
+       
+        {/* --- Shift Events (Overlay) --- */}
+        <div 
+          className="relative"
+          style={{
+            gridColumn: '2 / -1',
+            gridRow: `3 / span ${timeSlots.length}`,
+            pointerEvents: 'none' 
+          }}
+        >
+          {weekDays.map((day, dayIndex) => {
+            const dateStr = toDateString(day); // <-- ここの`toDateString`が修正された
+            const shifts = (SHIFTS[dateStr as keyof ShiftData] || [])
+              .map(s => {
+                const { startHour, endHour, isOff } = parseShiftTime(s.t);
+                return {
+                  memberId: s.m,
+                  time: s.t,
+                  startHour,
+                  endHour,
+                  isOff,
+                };
+              })
+              .filter(s => !s.isOff && s.startHour && s.endHour);
+             
+            // 重なり計算 (簡易版)
+            const shiftsWithOffset = shifts.map(s => ({ ...s, offset: 0, overlap: 1 }));
+            for (let i = 0; i < shiftsWithOffset.length; i++) {
+                let overlaps = [];
+                for (let j = 0; j < shiftsWithOffset.length; j++) {
+                    if (i !== j && shiftsWithOffset[i].startHour! < shiftsWithOffset[j].endHour! && shiftsWithOffset[i].endHour! > shiftsWithOffset[j].startHour!) {
+                        overlaps.push(j);
+                    }
+                }
+                shiftsWithOffset[i].overlap = overlaps.length + 1;
+                // オフセット決定 (簡易)
+                let occupied = new Set<number>();
+                for (let j = 0; j < i; j++) {
+                    if (shiftsWithOffset[i].startHour! < shiftsWithOffset[j].endHour! && shiftsWithOffset[i].endHour! > shiftsWithOffset[j].startHour!) {
+                        occupied.add(shiftsWithOffset[j].offset);
+                    }
+                }
+                let offset = 0;
+                while (occupied.has(offset)) {
+                    offset++;
+                }
+                shiftsWithOffset[i].offset = offset;
+            }
+           
+            const maxOverlaps = Math.max(1, ...shiftsWithOffset.map(s => s.offset + 1));
+            const dayWidthPercent = 100; // 1日分の幅 (100%)
+
+            return shiftsWithOffset.map((s) => {
+              const topOffset = (s.startHour! - GRID_START_HOUR) * 60; // 1h = 60px
+              const height = (s.endHour! - s.startHour!) * 60;
+             
+              const widthPercent = 100 / maxOverlaps;
+              const leftOffset = s.offset * widthPercent;
+
+              return (
+                <div
+                  key={s.memberId}
+                  className={`absolute z-10 p-1 rounded border overflow-hidden ${getMemberColor(s.memberId)}`}
+                  style={{
+                    pointerEvents: 'auto', 
+                    top: `${topOffset}px`,
+                    height: `${height}px`,
+                    left: `calc(${dayIndex * (100 / 7)}% + ${leftOffset * (100 / 7 / 100)}% + 2px)`, // (100/7) = 1日の幅
+                    width: `calc(${widthPercent * (100 / 7 / 100)}% - 4px)`, // 隙間
+                    opacity: 0.9,
+                  }}
+                  title={`${GET_NAME(s.memberId)}: ${s.time}`}
+                >
+                  <div className="text-[10px] font-semibold">{GET_NAME(s.memberId).split('（')[0]}</div>
+                  <div className="text-[10px]">{s.time}</div>
+                </div>
+              );
+            });
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Month View ---
+function MonthView({ currentDate, today }: { currentDate: Date, today: Date }) {
+  const d = new Date(currentDate);
+  d.setDate(1); // 1日に設定
+  const currentMonth = d.getMonth();
+  const todayStr = toDateString(today);
+
+  const monthStart = getWeekStart(d); // 月の第1週の月曜日
+ 
+  const days = Array.from({ length: 42 }).map((_, i) => { // 6週 * 7日
+    const day = new Date(monthStart);
+    day.setDate(day.getDate() + i);
+    return day;
+  });
+ 
+  const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* --- Day Headers --- */}
+      <div className="grid grid-cols-7 shrink-0">
+        {dayNames.map(name => (
+          <div key={name} className="p-2 text-center text-xs font-semibold text-gray-500 border-b border-r">{name}</div>
+        ))}
+      </div>
+     
+      {/* --- Day Cells --- */}
+      <div className="grid grid-cols-7 flex-1" style={{ gridTemplateRows: 'repeat(6, minmax(120px, 1fr))' }}> {/* 6行固定 */}
+        {days.map((day, i) => {
+          const dateStr = toDateString(day);
+          const isToday = dateStr === todayStr;
+          const isCurrentMonth = day.getMonth() === currentMonth;
+         
+          const dayShiftsData = SHIFTS[dateStr as keyof ShiftData];
+
+          // ▼▼▼ [修正] 全メンバーのシフト情報（休み含む）を生成 ▼▼▼
+          const shifts = MEMBERS.map(member => {
+            const shiftData = dayShiftsData?.find(s => s.m === member.id);
+            // データが無い日は、当月ならランダム、当月外なら「休み」
+            const time = shiftData ? shiftData.t : (isCurrentMonth ? (Math.random() > 0.4 ? '9:00-18:00' : '休み') : '休み'); 
+           
+            let displayTime = '休';
+            if (time !== '休み' && time.includes('-')) {
+                const parts = time.split('-');
+                if (parts.length === 2) {
+                    displayTime = `${parts[0].split(':')[0]}-${parts[1].split(':')[0]}`; // "9-18"
+                } else {
+                    displayTime = time; 
+                }
+            }
+
+            return {
+              memberId: member.id,
+              name: GET_NAME(member.id),
+              time: displayTime,
+              isOff: displayTime === '休',
+            };
+          }).sort((a,b) => a.name.localeCompare(b.name));
+           
+          const events = ALL_DAY_EVENTS.filter(e => {
+              const eventStart = new Date(e.start + 'T00:00:00+09:00');
+              const eventEnd = new Date(e.end + 'T00:00:00+09:00');
+              return day.getTime() >= eventStart.getTime() && day.getTime() <= eventEnd.getTime();
+          });
+
+          return (
+            <div 
+              key={dateStr}
+              className={`p-2 border-b border-r flex flex-col ${isCurrentMonth ? 'bg-white' : 'bg-gray-50'} ${isToday ? 'bg-indigo-50' : ''}`}
+            >
+              <div className={`text-sm font-medium ${isToday ? 'text-indigo-700' : (isCurrentMonth ? 'text-gray-800' : 'text-gray-400')}`}>
+                {day.getDate()}
+              </div>
+              <div className="mt-1 space-y-0.5 overflow-y-auto flex-1 min-h-0 text-xs">
+                  {events.map(e => (
+                      <div key={e.id} className={`px-1 rounded text-[10px] font-medium ${e.color} truncate`}>{e.title}</div>
+                  ))}
+                  {/* ▼▼▼ [修正] 全員のシフト/休みを表示 ▼▼▼ */}
+                  {shifts.map(s => (
+                    <div key={s.memberId} className={`flex items-center gap-1 ${s.isOff ? 'text-gray-400' : ''}`}>
+                      <PersonIcon className={`w-3 h-3 ${s.isOff ? 'text-gray-300' : getMemberColor(s.memberId).split(' ')[0]} shrink-0`} />
+                      <span className="truncate">{s.name.split('（')[0]}</span>
+                      <span className="ml-auto pr-1 text-[10px] font-medium">{s.time}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// --- DayViewGcal (Googleカレンダー風タイムグリッド・日) ---
+function DayViewGcal({ currentDate, today }: { currentDate: Date, today: Date }) {
+  const todayStr = toDateString(today);
+  const dateStr = toDateString(currentDate);
+  const isToday = dateStr === todayStr;
+
+  const shifts = (SHIFTS[dateStr as keyof ShiftData] || [])
+    .map(s => {
+      const { startHour, endHour, isOff } = parseShiftTime(s.t);
+      return {
+        memberId: s.m,
+        time: s.t,
+        startHour,
+        endHour,
+        isOff,
+      };
+    })
+    .filter(s => !s.isOff && s.startHour && s.endHour);
+
+  // シフトの重なりを計算
+  const shiftsWithOffset = shifts.map(s => ({ ...s, offset: 0, overlap: 1 }));
+  for (let i = 0; i < shiftsWithOffset.length; i++) {
+      let overlaps = [];
+      for (let j = 0; j < shiftsWithOffset.length; j++) {
+          if (i !== j && shiftsWithOffset[i].startHour! < shiftsWithOffset[j].endHour! && shiftsWithOffset[i].endHour! > shiftsWithOffset[j].startHour!) {
+              overlaps.push(j);
+          }
+      }
+      shiftsWithOffset[i].overlap = overlaps.length + 1;
+      // オフセット決定 (簡易)
+      let occupied = new Set<number>();
+      for (let j = 0; j < i; j++) {
+          if (shiftsWithOffset[i].startHour! < shiftsWithOffset[j].endHour! && shiftsWithOffset[i].endHour! > shiftsWithOffset[j].startHour!) {
+              occupied.add(shiftsWithOffset[j].offset);
+          }
+      }
+      let offset = 0;
+      while (occupied.has(offset)) {
+          offset++;
+      }
+      shiftsWithOffset[i].offset = offset;
+  }
+ 
+  const allDayEvents = ALL_DAY_EVENTS.filter(e => {
+    const start = new Date(e.start + 'T00:00:00+09:00');
+    const end = new Date(e.end + 'T00:00:00+09:00');
+    return currentDate.getTime() >= start.getTime() && currentDate.getTime() <= end.getTime();
+  });
+ 
+  const allDayRowHeight = Math.max(1, allDayEvents.length) * 32 + 8; // 1行32px + padding
+
+  const maxOverlaps = Math.max(1, ...shiftsWithOffset.map(s => s.offset + 1));
+
+  return (
+    <div className="h-full overflow-auto relative" style={{ minWidth: '300px' }}>
+      <div 
+        className="grid relative" 
+        style={{
+          gridTemplateColumns: '60px 1fr', // Time Axis + 1 Day
+          gridTemplateRows: `auto auto repeat(${timeSlots.length}, 60px) auto` // Header + AllDay + Slots + Footer(dummy)
+        }}
+      >
+        {/* --- Row 1: Date Header --- */}
+        <div className="sticky top-0 z-20 bg-white border-b border-r" style={{ gridColumn: 1, gridRow: 1 }}>&nbsp;</div>
+        <div 
+          className={`sticky top-0 z-20 bg-white border-b p-2 ${isToday ? 'bg-indigo-50' : ''}`}
+          style={{ gridColumn: 2, gridRow: 1 }}
+        >
+          <div className="text-xs text-gray-500">{['日', '月', '火', '水', '木', '金', '土'][currentDate.getDay()]}</div>
+          <div className={`text-2xl font-medium ${isToday ? 'text-indigo-700' : 'text-gray-800'}`}>
+            {currentDate.getDate()}
+          </div>
+        </div>
+       
+        {/* --- Row 2: All-Day --- */}
+        <div className="sticky top-[73px] z-20 bg-white border-b border-r text-right pr-2 pt-1 text-xs text-gray-400" style={{ gridColumn: 1, gridRow: 2, height: `${allDayRowHeight}px` }}>終日</div>
+        <div 
+          className="sticky top-[73px] z-20 bg-white border-b p-1"
+          style={{ 
+            gridColumn: 2,
+            gridRow: 2,
+            height: `${allDayRowHeight}px`,
+          }}
+        >
+          {allDayEvents.map((event, i) => (
+            <div 
+              key={event.id}
+              className={`h-6 px-2 py-0.5 rounded text-xs font-medium overflow-hidden ${event.color} mx-0.5`}
+              style={{
+                top: `${i * 28 + 4}px`,
+                position: 'relative',
+              }}
+            >
+              {event.title}
+            </div>
+          ))}
+        </div>
+       
+        {/* --- Rows 3+: Time Grid --- */}
+        {/* Time Axis (A3-A15) */}
+        {timeSlots.map((hour, hourIndex) => (
+            <React.Fragment key={hour}>
+            {/* Time Label */}
+            <div className="relative text-right pr-2 border-r -mt-2.5" style={{gridColumn: 1, gridRow: hourIndex + 3}}>
+                <span className="text-xs text-gray-400 sticky left-0">{hour}:00</span>
+              </div>
+            {/* Grid Cells (Empty) */}
+            <div 
+              className="border-b"
+              style={{ gridColumn: 2, gridRow: hourIndex + 3 }}
+            >
+              &nbsp;
+            </div>
+            </React.Fragment>
+        ))}
+       
+        {/* --- Shift Events (Overlay) --- */}
+        <div 
+          className="relative"
+          style={{
+            gridColumn: 2,
+            gridRow: `3 / span ${timeSlots.length}`,
+            pointerEvents: 'none' 
+          }}
+        >
+          {shiftsWithOffset.map((s) => {
+            const topOffset = (s.startHour! - GRID_START_HOUR) * 60; // 1h = 60px
+            const height = (s.endHour! - s.startHour!) * 60;
+           
+            const widthPercent = 100 / maxOverlaps;
+            const leftOffset = s.offset * widthPercent;
+
+            return (
+              <div
+                key={s.memberId}
+                className={`absolute z-10 p-1 rounded border overflow-hidden ${getMemberColor(s.memberId)}`}
+                style={{
+                  pointerEvents: 'auto', 
+                  top: `${topOffset}px`,
+                  height: `${height}px`,
+                  left: `calc(${leftOffset}% + 2px)`,
+                  width: `calc(${widthPercent}% - 4px)`, // 隙間
+                  opacity: 0.9,
+                }}
+                title={`${GET_NAME(s.memberId)}: ${s.time}`}
+              >
+                <div className="text-[10px] font-semibold">{GET_NAME(s.memberId).split('（')[0]}</div>
+                <div className="text-[10px]">{s.time}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// =================== VoiceTrustV8Style ===================
+type Category = 'thanks' | 'fix' | 'help' | 'together' | 'customer';
+type TimelineView = 'my' | 'inbox' | 'all';
+
+function VoiceTrustV8Style({ role }: { role: string }){
+  // --- State ---
+  const [category, setCategory] = useState<Category>('thanks');
+  const [timelineView, setTimelineView] = useState<TimelineView>('my');
+  const [recipient, setRecipient] = useState<string[]>([]); // 宛先IDの配列
+  const [text, setText] = useState('');
+  const [anonymous, setAnonymous] = useState(false);
+  const [recipientDropdownOpen, setRecipientDropdownOpen] = useState(false);
+ 
+  // --- 投稿データ (ダミー) ---
+  const [myPosts, setMyPosts] = useState<Post[]>(MY_POSTS);
+  const [inboxPosts, setInboxPosts] = useState<Post[]>(INBOX_POSTS);
+  const [allPublicPosts, setAllPublicPosts] = useState<Post[]>(ALL_PUBLIC_POSTS);
+
+  // --- モーダル制御 ---
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalPosts, setModalPosts] = useState<Post[]>([]);
+  const previewCount = 3; // プレビューで表示する件数
+
+  // --- ユーザーデータ (ダミー) ---
+  const currentUser = USER;
+  const members = MEMBERS;
+  const getMemberName = GET_NAME;
+  const formatTs = FORMAT_TS;
+ 
+  // --- Ref for dropdown ---
+  const recipientRef = useRef<HTMLDivElement>(null);
+
+  // --- Constants (UI) ---
+  /* ▼▼▼ [修正] categoryTitle と categoryDesc を categoryUI に統合し、tab と header を分離 ▼▼▼ */
+  /* ▼▼▼ [V2修正] 絵文字を削除して文字化けを防止 ▼▼▼ */
+  const categoryUI = {
+    thanks: { 
+      tab: '感謝😊', 
+      header: 'ありがとうを伝える😊',
+      desc: 'ちょっとした感謝をひとことで。' 
+    },
+    fix: { 
+      tab: 'なおして💡', 
+      header: 'ここ直してほしい💡',
+      desc: '改善してほしい点を具体的に。'
+    },
+    help: { 
+      tab: 'たすけて🫠', 
+      header: '困ってます🫠',
+      desc: '業務で困っていることを相談。'
+    },
+    together: { 
+      tab: 'いっしょに🤝', 
+      header: 'いっしょにやりましょう🤝',
+      desc: 'コラボレーションの提案。'
+    },
+    customer: { 
+      tab: 'お客さまの声🗣️', 
+      header: '大切なお客さまの声を共有🗣️',
+      desc: '印象に残ったお客さまの言葉を要約し、背景や気付きをひとことで。'
+    },
+  };
+  /* ▲▲▲ 修正ここまで ▲▲▲ */
+  
+  const catTheme = {
+    thanks: { tab: 'bg-red-100 text-red-700 hover:bg-red-200 focus:bg-red-600 focus:text-white', active: 'bg-red-600 text-white', bg: 'bg-red-50/50', button: 'bg-red-500 hover:bg-red-600' },
+    fix: { tab: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:bg-yellow-500 focus:text-white', active: 'bg-yellow-500 text-white', bg: 'bg-yellow-50/50', button: 'bg-yellow-500 hover:bg-yellow-600' },
+    help: { tab: 'bg-blue-100 text-blue-700 hover:bg-blue-200 focus:bg-blue-500 focus:text-white', active: 'bg-blue-500 text-white', bg: 'bg-blue-50/50', button: 'bg-blue-500 hover:bg-blue-600' },
+    together: { tab: 'bg-green-100 text-green-700 hover:bg-green-200 focus:bg-green-500 focus:text-white', active: 'bg-green-500 text-white', bg: 'bg-green-50/50', button: 'bg-green-500 hover:bg-green-600' },
+    customer: { tab: 'bg-purple-100 text-purple-700 hover:bg-purple-200 focus:bg-purple-600 focus:text-white', active: 'bg-purple-600 text-white', bg: 'bg-purple-50/50', button: 'bg-purple-600 hover:bg-purple-700' },
+  };
+  const placeholderByCat = {
+    thanks: '例：誰に・ど対応が良かった？「〇〇さん、カウンセリング神対応でした！」',
+    fix: '例：どの業務・何が変？「テスターの補充ルール、導線が悪すぎ！」',
+    help: '例：どの業務・何が不明？「ギフト包装のパターンB、まだ自信ないです…」',
+    together: '例：何を・どうしたい？「新人向けのマニュアル、もっと簡素化しませんか？」',
+    customer: '例：要約＋背景「敏感肌の方から“この化粧水は刺激が少ない”と３名」',
+  };
+ 
+  // --- Effects ---
+  // Dropdown を外側クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (recipientRef.current && !recipientRef.current.contains(event.target as Node)) {
+        setRecipientDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [recipientRef]);
+
+  // --- Handlers ---
+  const handleCategoryChange = (val: string) => {
+    setCategory(val as Category);
+    // カテゴリ変更時は宛先とテキストをリセット
+    setRecipient([]);
+    setText('');
+    setAnonymous(false);
+  };
+ 
+  const handleSubmit = () => {
+    if (!text.trim() || recipient.length === 0) return;
+    
+    const newPost: Post = {
+      id: `m${Date.now()}`,
+      authorId: anonymous ? 'anonymous' : currentUser.id,
+      recipient: recipient.length === 1 ? recipient[0] : recipient, // 宛先
+      /* ▼▼▼ [修正] 投稿本文に含めるタイトルをフォームのヘッダーと連動させる ▼▼▼ */
+      text: `【${categoryUI[category].header}】${text}`, // categoryTitle -> categoryUI[category].header
+      ts: Date.now(),
+      reactions: [],
+    };
+   
+    // 自分の投稿に追加
+    setMyPosts([newPost, ...myPosts]);
+   
+    // 宛先が 'zen' (全体) なら 'みんな' にも追加
+    /* ▼▼▼ [修正] 'zen' 宛でなくても、'みんな' のタイムラインに追加する ▼▼▼ */
+    setAllPublicPosts([newPost, ...allPublicPosts]);
+    /* ▲▲▲ 修正 ▲▲▲ */
+    
+    // 宛先が自分でない場合、ダミーで相手のINBOXにも追加 (デモ用)
+    if (recipient.includes('sato')) {
+      setInboxPosts([{...newPost, id:`i${Date.now()}`, replied: false}, ...inboxPosts]);
+    }
+
+    // フォームリセット
+    setText('');
+    setRecipient([]);
+    setAnonymous(false);
+    setRecipientDropdownOpen(false);
+  };
+
+  /* ▼▼▼ [追加] リアクション処理ハンドラ ▼▼▼ */
+  const handleReaction = (postId: string, emoji: string) => {
+    const loginUserId = currentUser.id;
+
+    const updatePostList = (posts: Post[]): Post[] => {
+      return posts.map(p => {
+        if (p.id !== postId) return p;
+
+        let newReactions = [...p.reactions];
+        const existingReactionIndex = newReactions.findIndex(r => r.emoji === emoji);
+
+        if (existingReactionIndex > -1) {
+          // 絵文字が既にリアクション配列に存在する
+          const reaction = newReactions[existingReactionIndex];
+          const userIndex = reaction.by.indexOf(loginUserId);
+
+          if (userIndex > -1) {
+            // ユーザーが既にこの絵文字でリアクションしている -> リアクションを削除
+            reaction.by.splice(userIndex, 1);
+            reaction.count = reaction.by.length;
+            if (reaction.count === 0) {
+              // 誰もリアクションしていなければ、絵文字のエントリ自体を削除
+              newReactions.splice(existingReactionIndex, 1);
+            }
+          } else {
+            // ユーザーがこの絵文字でリアクションしていない -> ユーザーを追加
+            reaction.by.push(loginUserId);
+            reaction.count = reaction.by.length;
+          }
+        } else {
+          // この投稿に対する新しい絵文字のリアクション
+          newReactions.push({ emoji, count: 1, by: [loginUserId] });
+        }
+        return { ...p, reactions: newReactions };
+      });
+    };
+
+    // すべてのタイムラインのstateを更新
+    setMyPosts(updatePostList);
+    setInboxPosts(updatePostList);
+    setAllPublicPosts(updatePostList);
+  };
+  /* ▲▲▲ 追加ここまで ▲▲▲ */
+
+
+  const openModal = (view: TimelineView) => {
+    if (view === 'my') {
+      setModalTitle('あなたの投稿（すべて）');
+      setModalPosts(myPosts);
+    } else if (view === 'inbox') {
+      setModalTitle('あなた宛ての投稿（すべて）');
+      setModalPosts(inboxPosts);
+    } else {
+      setModalTitle('みんなの投稿（すべて）');
+      setModalPosts(allPublicPosts);
+    }
+    setModalOpen(true);
+  };
+ 
+  /* ▼▼▼ [追加] リアクションバー コンポーネント ▼▼▼ */
+  const ReactionBar = ({ post }: { post: Post }) => {
+    const [showPicker, setShowPicker] = useState(false);
+    // Slack風の主要な絵文字
+    const EMOJIS = ['👍', '😊', '❤️', '🎉', '💡', '🤔'];
+    const loginUserId = currentUser.id;
+    
+    // ユーザーが既にリアクションした絵文字のセット
+    const userReactions = new Set(post.reactions.filter(r => r.by.includes(loginUserId)).map(r => r.emoji));
+
+    const handleEmojiClick = (emoji: string) => {
+      handleReaction(post.id, emoji);
+      setShowPicker(false);
+    };
+    
+    return (
+      <div className="flex items-center gap-2 relative">
+        {/* 集計されたリアクション */}
+        {post.reactions.map(r => (
+          <button
+            key={r.emoji}
+            onClick={() => handleEmojiClick(r.emoji)}
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all ${
+              userReactions.has(r.emoji)
+              ? 'bg-indigo-600 text-white' // 自分がリアクション済み
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200'
+            }`}
+          >
+            <span>{r.emoji}</span>
+            <span className="font-semibold">{r.count}</span>
+          </button>
+        ))}
+        
+        {/* 絵文字ピッカーボタン */}
+        <button 
+          onClick={() => setShowPicker(!showPicker)}
+          className="p-1 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+        >
+          {/* Slack風のスタンプ追加アイコン（ChatIconで代用） */}
+          <ChatIcon className="w-4 h-4" /> 
+        </button>
+        
+        {/* 絵文字ピッカー */}
+        {showPicker && (
+          <div className="absolute top-7 left-0 z-10 bg-white shadow-lg rounded-full border border-gray-200 p-1 flex gap-1">
+            {EMOJIS.map(emoji => (
+              <button
+                key={emoji}
+                onClick={() => handleEmojiClick(emoji)}
+                className="text-base p-1.5 rounded-full hover:bg-gray-100 transition-transform active:scale-90"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+  /* ▲▲▲ 追加ここまで ▲▲▲ */
+
+  // --- Render ---
+  const renderPost = (p: Post, view: TimelineView) => {
+    const authorName = p.authorId === 'anonymous' ? '匿名' : getMemberName(p.authorId);
+    let recipientName = '';
+   
+    if (Array.isArray(p.recipient)) {
+      recipientName = p.recipient.map(getMemberName).join(', ');
+    } else {
+      recipientName = getMemberName(p.recipient);
+    }
+
+    /* ▼▼▼ [修正] 'みんな' (all) ビューの時は From -> To 形式で表示 ▼▼▼ */
+    let title = '';
+    if (view === 'my') {
+      title = `To: ${recipientName}`;
+    } else if (view === 'inbox') {
+      title = `From: ${authorName}`;
+    } else { // 'all'
+      /* ▼▼▼ [修正] 'From: (差出人) → To: (宛先)' の形式に変更 ▼▼▼ */
+      title = `From: ${authorName} → To: ${recipientName}`;
+    }
+    /* ▲▲▲ 修正 ▲▲▲ */
+
+    return (
+      <div key={p.id} className="py-3 border-b last:border-b-0">
+        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+          <span className="font-semibold">{title}</span>
+          <span>{formatTs(p.ts)}</span>
+        </div>
+        <p className="text-sm text-gray-800 whitespace-pre-line">{p.text}</p>
+        <div className="flex items-center justify-between mt-2">
+          {/* Reactions */}
+          {/* ▼▼▼ [修正] 静的な表示から ReactionBar コンポーネントに変更 ▼▼▼ */}
+          <ReactionBar post={p} />
+          {/* ▲▲▲ 修正 ▲▲▲ */}
+          {/* Reply Status */}
+          {view === 'inbox' && !p.replied && (
+            <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">未返信</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full max-w-6xl mx-auto">
+      <div className="text-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 leading-tight">
+          <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">tsumugi</span> ひとことボード
+        </h1>
+        <p className="text-sm text-gray-600 mt-1">チームワークを高めるための小さな発信ツール</p>
+      </div>
+
+      {/* --- 1. カテゴリ選択 --- */}
+      <VoiceTabs value={category} onChange={handleCategoryChange}>
+        <VoiceTabList>
+          {Object.keys(catTheme).map(catKey => {
+            const key = catKey as Category;
+            return (
+              <VoiceTab key={key} value={key} className={`${category === key ? catTheme[key].active : catTheme[key].tab}`}>
+                {categoryUI[key].tab} {/* ▼▼▼ [修正] categoryTitle -> categoryUI[key].tab ▼▼▼ */ }
+              </VoiceTab> 
+            )
+          })}
+        </VoiceTabList>
+
+        {/* --- 2. 投稿フォーム --- */}
+        {Object.keys(catTheme).map(catKey => {
+          const key = catKey as Category;
+          return (
+            <VoiceTabPanel key={key} when={key}>
+              <Card className={`shadow-lg transition-all duration-300 ${catTheme[key].bg}`}>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                      {categoryUI[key].header} {/* ▼▼▼ [修正] categoryTitle -> categoryUI[key].header ▼▼▼ */ }
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {categoryUI[key].desc} {/* ▼▼▼ [修正] categoryDesc -> categoryUI[key].desc ▼▼▼ */ }
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700 font-medium">誰に送りますか？</span>
+                   
+                    <div className="relative w-full" ref={recipientRef}>
+                      <button
+                        onClick={() => setRecipientDropdownOpen(prev => !prev)}
+                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 h-10 text-sm text-left flex items-center justify-between"
+                      >
+                        <span className="truncate">
+                          {recipient.length === 0 && '宛先を選択'}
+                          {recipient.length > 0 && recipient.map(getMemberName).join(', ')}
+                        </span>
+                        <span>▼</span>
+                      </button>
+
+                      {recipientDropdownOpen && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {members
+                            .filter((m) => m.id !== currentUser.id)
+                            .map((m) => (
+                              <label
+                                key={m.id}
+                                className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4"
+                                  checked={recipient.includes(m.id)}
+                                  onChange={(e) => {
+                                    const memberId = m.id;
+                                    const isChecked = e.target.checked;
+                                    setRecipient(prev =>
+                                      isChecked
+                                        ? (memberId === 'zen' ? ['zen'] : [...prev.filter(id => id !== 'zen'), memberId])
+                                        : (memberId === 'zen' ? [] : prev.filter(id => id !== memberId))
+                                    );
+                                    if (memberId === 'zen' && isChecked) {
+                                      setRecipientDropdownOpen(false);
+                                    }
+                                  }}
+                                />
+                                {m.name}
+                              </label>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                 
+                  <Textarea
+                    placeholder={placeholderByCat[key]}
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    className="min-h-[120px] border-gray-300 focus:border-indigo-500"
+                  />
+                 
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 text-sm select-none">
+                      <input
+                        type="checkbox"
+                        checked={anonymous}
+                        onChange={(e) => setAnonymous(e.target.checked)}
+                        className="w-4 h-4"
+                      />
+                      匿名で投稿
+                    </label>
+                    <Button 
+                      disabled={!text.trim()} 
+                      onClick={handleSubmit}
+                      className={`transition-all ${catTheme[key].button} ${!text.trim() ? 'opacity-50' : ''}`}
+                    >
+                      送信する🚀
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </VoiceTabPanel>
+          )
+        })}
+      </VoiceTabs>
+
+      {/* --- 3. タイムライン --- */}
+      <div className="mt-6">
+        <Tabs value={timelineView} onChange={(v) => setTimelineView(v as TimelineView)}>
+          <TabList className="bg-gray-100 rounded-t-lg border-gray-200 sticky top-16 z-10 shadow-inner inset-x-0 px-1 sm:px-4">
+            <Tab value="my" className={`flex-1 sm:flex-initial ${timelineView === 'my' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-600 hover:text-gray-800'}`}>
+              <SendIcon className="w-5 h-5 sm:mr-1.5"/>
+              <span className="hidden sm:inline">あなた発（{myPosts.length}）</span>
+            </Tab>
+            <Tab value="inbox" className={`flex-1 sm:flex-initial ${timelineView === 'inbox' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-600 hover:text-gray-800'}`}>
+              <InboxIcon className="w-5 h-5 sm:mr-1.5"/>
+              <span className="hidden sm:inline">あなた宛（{inboxPosts.length}）</span>
+            </Tab>
+            <Tab value="all" className={`flex-1 sm:flex-initial ${timelineView === 'all' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-600 hover:text-gray-800'}`}>
+              <UsersIcon className="w-5 h-5 sm:mr-1.5"/>
+              <span className="hidden sm:inline">みんな（{allPublicPosts.length}）</span>
+            </Tab>
+          </TabList>
+
+          <Card className="rounded-t-none">
+            <CardContent className="pt-5">
+              <TabPanel when="my">
+                {myPosts.length > 0 ? (
+                  myPosts.slice(0, previewCount).map(p => renderPost(p, 'my'))
+                ) : (
+                  <p className="text-sm text-gray-500">まだ投稿がありません。</p>
+                )}
+                {myPosts.length > previewCount && <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => openModal('my')}>すべて見る（{myPosts.length}件）</Button>}
+              </TabPanel>
+
+              <TabPanel when="inbox">
+                {inboxPosts.length > 0 ? (
+                  inboxPosts.slice(0, previewCount).map(p => renderPost(p, 'inbox'))
+                ) : (
+                  <p className="text-sm text-gray-500">あなた宛ての投稿はまだありません。</p>
+                )}
+                {inboxPosts.length > previewCount && <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => openModal('inbox')}>すべて見る（{inboxPosts.length}件）</Button>}
+              </TabPanel>
+
+              <TabPanel when="all">
+                {allPublicPosts.length > 0 ? (
+                  allPublicPosts.slice(0, previewCount).map(p => renderPost(p, 'all'))
+                ) : (
+                  <p className="text-sm text-gray-500">まだ投稿がありません。</p>
+                )}
+                {allPublicPosts.length > previewCount && <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => openModal('all')}>すべて見る（{allPublicPosts.length}件）</Button>}
+              </TabPanel>
+            </CardContent>
+          </Card>
+        </Tabs>
+      </div>
+
+
+      {/* --- 投稿閲覧用モーダル --- */}
+      <Modal open={modalOpen} title={modalTitle} onClose={()=>setModalOpen(false)}>
+        <div className="max-h-[60vh] overflow-y-auto pr-2">
+          {modalPosts.length > 0 ? (
+            modalPosts.map(p => renderPost(p, 
+              modalTitle.includes('あなた') ? (modalTitle.includes('宛て') ? 'inbox' : 'my') : 'all'
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">まだ投稿がありません。</p>
+          )}
+        </div>
+      </Modal>
+    </div>
+  );
+}
+/* ▲▲▲ 復元ここまで ▲▲▲ */
+
+
+// =================== KnowledgeBase (Box風UI) ===================
+function KnowledgeBase({ role }: { role: string }){
+  const [viewMode, setViewMode] = useState('latest'); // 'latest', 'all_files', 'all_messages'
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiTarget, setAiTarget] = useState<KnowledgeFile | Notice | null>(null);
+  const [managerMsg, setManagerMsg] = useState<Notice[]>([...INITIAL_NOTICES, { id:'n2', title:'【再送】年末調整の対応', body:'未提出者は本日中に必ず対応してください。', created:'2025-10-28 10:00' }, { id:'n3', title:'棚卸しスケジュール', body:'今週末の棚卸し担当は添付ファイル確認。', created:'2025-10-27 15:00' }, { id:'n4', title:'MTGキャンセル', body:'本日の夕礼はキャンセルです。', created:'2025-10-27 09:00' }]);
+  const [draftTitle, setDraftTitle] = useState('');
+  const [draftBody, setDraftBody] = useState('');
+  const allFolders = KNOWLEDGE_FOLDERS;
+  const allFiles = KNOWLEDGE; 
+
+  const sorted = [...KNOWLEDGE].sort((a,b)=> new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime());
+  const imp = sorted.filter(x=>x.important);
+  const latest = sorted.slice(0,5);
+  const primary = Array.from(new Set([...imp, ...latest]));
+
+  const addMsg = ()=>{
+    if(role!=='manager' || !draftTitle.trim() || !draftBody.trim()) return;
+    const created = new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'});
+    setManagerMsg([{ id:`n${Date.now()}`, title:draftTitle, body:draftBody, created }, ...managerMsg]);
+    setDraftTitle(''); setDraftBody('');
+  };
+
+  const openAISummary = (f: KnowledgeFile)=>{ 
+    setAiTarget(f); 
+    setAiOpen(true); 
+  };
+ 
+  // --- 共通: ファイルカードコンポーネント ---
+  const FileCard = ({ f }: { f: KnowledgeFile }) => (
+    <div key={f.id} className="border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start gap-3">
+        {f.important && <span className="text-yellow-500 pt-0.5"><StarIcon className="w-5 h-5"/></span>}
+        <div className="flex-1">
+          <div className="font-semibold text-gray-800">{f.title}</div>
+          <div className="text-xs text-gray-500">{f.type} • {f.uploaded} • {f.size}</div>
+          <div className="mt-3 flex gap-2">
+            <Button variant="outline" size="sm">ファイルを開く</Button>
+            <Button variant="primary" size="sm" onClick={()=>openAISummary(f)}>
+              <SparklesIcon className="w-4 h-4 mr-1.5"/>AI要約を見る
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+ 
+  // --- 共通: 店長メッセージカード ---
+  const MsgCard = ({ m }: { m: Notice }) => (
+    <div className="border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={()=>{ setAiTarget(m); setAiOpen(true); }}>
+      <div className="font-semibold text-gray-800">{m.title}</div>
+      <div className="text-xs text-gray-500 mb-2">{m.created}</div>
+      <p className="text-sm text-gray-600 line-clamp-2">{m.body}</p>
+    </div>
+  );
+
+  if(viewMode === 'all_files'){ 
+    return (
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">すべてのファイル（Box）</h1>
+          <Button variant="outline" size="sm" onClick={()=>setViewMode('latest')}>最新に戻る</Button>
+        </div>
+       
+        <Card>
+          <CardHeader>
+            <div className="text-base font-semibold">ファイル通達（フォルダ別）</div>
+            <div className="text-xs text-gray-500">AI要約付きのファイル群です。</div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              {allFolders.map(folder => (
+                <div key={folder.id} className="border rounded-lg p-3 flex items-center gap-3 hover:bg-gray-50 cursor-pointer">
+                  <FolderIcon className="w-6 h-6 text-indigo-500"/>
+                  <div>
+                    <div className="text-sm font-medium">{folder.name}</div>
+                    <div className="text-xs text-gray-500">更新: {folder.updated}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+           
+            <div className="border rounded-lg overflow-hidden">
+              <div className="hidden md:grid grid-cols-12 px-4 py-2 text-xs text-gray-500 bg-gray-50 font-medium">
+                <div className="col-span-5">ファイル名</div>
+                <div className="col-span-2">フォルダ</div>
+                <div className="col-span-2">最終更新</div>
+                <div className="col-span-3 text-right">アクション</div>
+              </div>
+              {allFiles.map(f => (
+                <div key={f.id} className="grid grid-cols-1 md:grid-cols-12 px-4 py-3 items-center border-t text-sm">
+                  <div className="col-span-12 md:col-span-5 flex items-center gap-2 mb-2 md:mb-0">
+                    {f.type === 'PDF' ? <FileIcon className="w-5 h-5 text-rose-500"/> : <FileIcon className="w-5 h-5 text-blue-500"/>}
+                    <span className="font-medium text-gray-800">{f.title}</span>
+                    {f.important && <span className="text-yellow-500"><StarIcon className="w-4 h-4"/></span>}
+                  </div>
+                  <div className="col-span-12 md:col-span-2 text-xs text-gray-600 md:text-sm">
+                    {allFolders.find(fold => fold.id === f.folderId)?.name || 'ルート'}
+                  </div>
+                  <div className="col-span-12 md:col-span-2 text-xs text-gray-500 md:text-sm">{f.uploaded}</div>
+                  <div className="col-span-12 md:col-span-3 flex items-center gap-2 justify-start md:justify-end mt-2 md:mt-0">
+                    <Button variant="outline" size="sm">ファイルを開く</Button>
+                    <Button variant="primary" size="sm" onClick={()=>openAISummary(f)}>
+                      <SparklesIcon className="w-4 h-4 mr-1"/>AI要約
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Modal open={aiOpen} title={aiTarget? (('body' in aiTarget) ? aiTarget.title : `${aiTarget.title} のAI要約`) : ''} onClose={()=>setAiOpen(false)}>
+          {aiTarget && ('body' in aiTarget ? <div className="whitespace-pre-line">{aiTarget.body}</div> : <div className="space-y-2"><p>（ダミーAI要約）</p><p>1. 重要ポイントは「リピジュアEX」です。</p><p>2. 現場では「敏感肌のお客様」への声かけを徹底してください。</p><p>3. 注意事項は「既存品との併用は非推奨」です。</p></div>)}
+        </Modal>
+      </div>
+    );
+  }
+
+  if(viewMode === 'all_messages'){
+    return (
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">すべての店長メッセージ</h1>
+          <Button variant="outline" size="sm" onClick={()=>setViewMode('latest')}>最新に戻る</Button>
+        </div>
+       
+        <Card>
+          <CardHeader>
+            <div className="text-base font-semibold">店長メッセージ（全件）</div>
+            <div className="text-xs text-gray-500">AI要約なしの短文通達です。</div>
+          </CardHeader>
+          {role==='manager' && (
+            <CardContent className="border-b grid gap-2">
+              <div className="text-sm font-semibold">新規メッセージ作成</div>
+              <Input placeholder="タイトル" value={draftTitle} onChange={e=>setDraftTitle(e.target.value)} />
+              <Textarea rows={3} placeholder="本文（短文でOK）" value={draftBody} onChange={e=>setDraftBody(e.target.value)} />
+              <div className="text-right"><Button onClick={addMsg} disabled={!draftTitle.trim() || !draftBody.trim()}>メッセージを追加</Button></div>
+            </CardContent>
+          )}
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {managerMsg.map(m => <MsgCard key={m.id} m={m} />)}
+          </CardContent>
+        </Card>
+
+        <Modal open={aiOpen} title={aiTarget? (('body' in aiTarget) ? aiTarget.title : `${aiTarget.title} のAI要約`) : ''} onClose={()=>setAiOpen(false)}>
+          {aiTarget && ('body' in aiTarget ? <div className="whitespace-pre-line">{aiTarget.body}</div> : <div className="space-y-2"><p>（ダミーAI要約）</p><p>1. 重要ポイントは「リピジュアEX」です。</p><p>2. 現場では「敏感肌のお客様」への声かけを徹底してください。</p><p>3. 注意事項は「既存品との併用は非推奨」です。</p></div>)}
+        </Modal>
+      </div>
+    );
+  }
+
+
+  // --- デフォルトビュー（最新） ---
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-base font-semibold">店長メッセージ（最新）</div>
+              <div className="text-xs text-gray-500">AI要約なし。クリックでポップアップ表示。</div>
+            </div>
+            <Button variant="link" size="sm" onClick={()=>setViewMode('all_messages')}>過去のメッセージを見る</Button>
+          </div>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {managerMsg.slice(0,3).map(m => <MsgCard key={m.id} m={m} />)}
+        </CardContent>
+        {role==='manager' && (
+          <CardContent className="border-t">
+            <div className="text-xs text-gray-500 mb-2">新規メッセージ作成</div>
+            <div className="grid gap-2">
+              <Input placeholder="タイトル" value={draftTitle} onChange={e=>setDraftTitle(e.target.value)} />
+              <Textarea rows={3} placeholder="本文（短文でOK）" value={draftBody} onChange={e=>setDraftBody(e.target.value)} />
+              <div className="text-right"><Button onClick={addMsg} disabled={!draftTitle.trim() || !draftBody.trim()}>追加</Button></div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+     
+      <div className="flex items-center justify-between mt-4">
+        <h1 className="text-base sm:text-lg font-semibold">ファイル通達（最新・重要）</h1>
+        <Button variant="outline" size="sm" onClick={()=>setViewMode('all_files')}>すべてのファイルを見る</Button>
+      </div>
+     
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {primary.map(f => <FileCard key={f.id} f={f} />)}
+      </div>
+
+      <Modal open={aiOpen} title={aiTarget? (('body' in aiTarget) ? aiTarget.title : `${aiTarget.title} のAI要約`) : ''} onClose={()=>setAiOpen(false)}>
+        {aiTarget && ('body' in aiTarget ? <div className="whitespace-pre-line">{aiTarget.body}</div> : <div className="space-y-2"><p>（ダミーAI要約）</p><p>1. 重要ポイントは「リピジュアEX」です。</p><p>2. 現場では「敏感肌のお客様」への声かけを徹底してください。</p><p>3. 注意事項は「既存品との併用は非推奨」です。</p></div>)}
+      </Modal>
+    </div>
+  );
+}
+
+
+// =================== RelationshipDashboard (ラベル修正) ===================
+type WeatherStatus = 'good' | 'cloudy' | 'bad';
+interface KpiCard {
+  k: string;
+  v: number;
+  sub: string;
+  status: WeatherStatus;
+}
+interface Risk {
+  name: string;
+  why: string;
+  action: string;
+}
+interface Bottleneck {
+  team: string;
+  response: number;
+  resolution: number;
+  color: string;
+}
+
+function RelationshipDashboard(){
+ 
+  const WeatherIcon = ({ status }: { status: WeatherStatus }) => {
+    if (status === 'good') return <CheckCircleIcon className="w-5 h-5 text-green-500"/>; // 晴れ
+    if (status === 'cloudy') return <ExclamationCircleIcon className="w-5 h-5 text-amber-500"/>; // くもり
+    if (status === 'bad') return <ExclamationCircleIcon className="w-5 h-5 text-rose-500"/>; // 雨
+    return null;
+  };
+
+  const cards: KpiCard[] = [
+    {k:'Flow (流れ)',v:74,sub:'滞留: B店・夜間', status: 'cloudy'},
+    {k:'Tone (温度)',v:68,sub:'ネガ比率↑（C店）', status: 'bad'},
+    {k:'Rhythm (継続)',v:72,sub:'応答周期の乱れ', status: 'cloudy'},
+    {k:'Voice (声)',v:81,sub:'反映率 63%', status: 'good'},
+    {k:'Trust (信頼)',v:76,sub:'前週 +2', status: 'good'},
+  ];
+
+  const summaryPoints: string[] = [
+    "「山口さん」「佐藤さん」の応答遅延（Rhythmの詰まり）が顕著です。",
+    "全店的に「改善提案（Voice）」の反映率が低下傾向にあります（平均63%）。",
+    "「山口さん」「佐藤さん」に業務負荷集中とネガティブ投稿の兆候が見られます。"
+  ];
+ 
+  const risks: Risk[] = [
+    {name:'山口', why:'Voice減＋ネガ高＋欠勤2', action:'夜勤後の15分1on1で「最近の困りごと」確認。土曜昼帯の応援1枠追加を検討。'},
+    {name:'佐藤', why:'反映待ち7件/14日', action:'「未反映の具体」を棚卸し→今日中に3件だけ着手できる小タスク化。店長が1件代行着手し勢いをつける。'},
+    {name:'田中', why:'連続深夜＋投稿0/10日', action:'次シフトで軽作業へローテ。朝礼で称賛1トピックを付与し、Voice再開の合図を作る。'},
+  ];
+
+  const bottleneckData: Bottleneck[] = [
+    { team: '鈴木', response: 4, resolution: 12, color: 'bg-green-300' },
+    { team: '木村', response: 6, resolution: 18, color: 'bg-green-200' },
+    { team: '田中', response: 12, resolution: 36, color: 'bg-amber-300' },
+    { team: '山口', response: 28, resolution: 72, color: 'bg-rose-400' }, // 詰まり
+    { team: '佐藤', response: 20, resolution: 48, color: 'bg-amber-400' }, // 詰まり
+  ];
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200 shadow-lg">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <SparklesIcon className="w-6 h-6 text-indigo-600"/>
+            <div className="font-semibold text-lg text-gray-900">AIコーチ（今週の優先アクション）</div>
+          </div>
+          <div className="text-sm text-gray-600">ERMデータと勤怠データから、組織課題と個別アラートを抽出しました。</div>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 border-b pb-4">
+            <div className="text-sm font-semibold text-gray-800 mb-2">▼ サマリー（全体傾向）</div>
+            <ul className="list-disc list-inside space-y-1 text-sm text-gray-800">
+              {summaryPoints.map((point, idx) => (
+                <li key={idx}>{point}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="text-sm font-semibold text-gray-800 mb-2">▼ 優先対応アラート（個別）</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {risks.map((r,i)=> (
+              <div key={i} className="border rounded-2xl p-4 bg-white shadow-sm">
+                <div className="flex items-center gap-2">
+                  <ExclamationCircleIcon className="w-5 h-5 text-rose-500"/>
+                  <div className="text-lg font-bold">{r.name}</div>
+                </div>
+                <div className="text-xs text-gray-500 mb-2 ml-7">兆候：{r.why}</div>
+                <div className="text-sm text-gray-800">提案：{r.action}</div>
+                <div className="mt-3 flex gap-2 text-xs">
+                  <Button size="sm" variant="outline">声かけテンプレ</Button>
+                  <Button size="sm" variant="outline">1on1を作成</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {cards.map(c=> (
+          <Card key={c.k}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-gray-700">{c.k}</div>
+                <WeatherIcon status={c.status} />
+              </div>
+            </CardHeader>
+          <CardContent className="text-center">
+              <div className="text-4xl font-extrabold tracking-tight text-indigo-600">{c.v}</div>
+              <div className="text-xs text-gray-500 mt-1">{c.sub}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <Card>
+        <CardHeader><div className="font-semibold text-sm">Voice反映率（店舗別・週次）</div></CardHeader>
+        <CardContent>
+          <div className="h-56 bg-gray-50 border rounded-2xl flex items-end gap-2 p-4">
+            {[82,56,61,74,69].map((v,i)=> (<div key={i} className="flex-1 bg-indigo-300 rounded-t" style={{height:`${v}%`}} title={`${v}%`}></div>))}
+          </div>
+        </CardContent>
+      </Card>
+     
+      <Card>
+        <CardHeader><div className="font-semibold text-sm">Trust成長度（全社・月次）</div></CardHeader>
+        <CardContent>
+          <div className="h-56 bg-gray-50 border rounded-2xl flex items-center justify-center p-4 relative">
+            <svg viewBox="0 0 100 50" className="w-full h-full absolute inset-0 p-4">
+              <path d="M 0 40 C 20 10, 40 30, 60 20, 80 40, 100 30" fill="none" stroke="#4f46e5" strokeWidth="2"/>
+              <circle cx="0" cy="40" r="1.5" fill="#4f46e5" />
+              <circle cx="20" cy="10" r="1.5" fill="#4f46e5" />
+              <circle cx="40" cy="30" r="1.5" fill="#4f46e5" />
+              <circle cx="60" cy="20" r="1.5" fill="#4f46e5" />
+              <circle cx="80" cy="40" r="1.5" fill="#4f46e5" />
+              <circle cx="100" cy="30" r="1.5" fill="#4f46e5" />
+            </svg>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card> 
+        <CardHeader><div className="font-semibold text-sm">Rhythm詰まりマップ（スタッフ別 平均応答時間）</div></CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex text-xs text-gray-500">
+              <div className="w-1/3">スタッフ名</div>
+              <div className="w-2/3">応答時間（h） [ 0 ... 24 ... 48 ... 72+ ]</div>
+            </div>
+            {bottleneckData.map(d => (
+              <div key={d.team} className="flex items-center">
+                <div className="w-1/3 text-sm font-medium text-gray-700 truncate pr-2">{d.team}</div>
+                <div className="w-2/3 flex items-center">
+                  <div 
+                    className={`h-6 rounded ${d.color} transition-all duration-500`} 
+                    style={{ width: `${Math.min(100, (d.response / 72) * 100)}%` }}
+                  />
+                  <span className="text-xs font-semibold ml-2">{d.response}h</span>
+                </div>
+              </div>
+            ))}
+            <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-300"/> 良好 (～12h)</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-300"/> 注意 (～24h)</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-rose-400"/> 危険 (24h+)</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+     
+      <Card>
+        <CardHeader><div className="font-semibold text-sm">参考：事実データ（連携SaaS）</div></CardHeader>
+        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="border p-3 rounded-lg text-center">
+    <div className="text-xs text-gray-500">KOT (勤怠)</div>
+    <div className="text-lg font-semibold">遅刻 3名</div>
+  </div>
+  <div className="border p-3 rounded-lg text-center">
+    <div className="text-xs text-gray-500">KOT (勤怠)</div>
+    <div className="text-lg font-semibold">平均残業 18.5h</div>
+  </div>
+  <div className="border p-3 rounded-lg text-center">
+    <div className="text-xs text-gray-500">カオナビ (評価)</div>
+    <div className="text-lg font-semibold">評価 進捗 64%</div>
+  </div>
+  <div className="border p-3 rounded-lg text-center">
+    <div className="text-xs text-gray-500">カオナビ (スキル)</div>
+    <div className="text-lg font-semibold">新商品テスト 82点</div>
+  </div>
+        </CardContent>
+      </Card>
+</div>
+  );
+}
+
+
+// =================== Integrations (UI修正) ===================
+interface IntegrationItem {
+  k: string;
+  label: string;
+  status: 'linked' | 'unlinked';
+  sub: string;
+}
+
+function Integrations(){
+  const items: IntegrationItem[] = [
+    { k:'KOT', label:'KING OF TIME (勤怠)', status:'linked', sub:'最終同期: 2025-11-01 00:05' },
+    { k:'KAO', label:'カオナビ (タレント)', status:'linked', sub:'最終同期: 2025-10-31 23:00' },
+    { k:'SHR', label:'SmartHR (労務)', status:'unlinked', sub:'従業員マスタの連携を推奨します。' },
+    { k:'KIN', label:'kintone (業務)', status:'linked', sub:'連携DB: kintone-db-123' },
+  ];
+  const chip = (s: 'linked' | 'unlinked')=> s==='linked' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700';
+ return (
+    <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="md:col-span-2 p-4 bg-white rounded-2xl border">
+        <h3 className="font-semibold">中立的なERMハブ戦略</h3>
+        <p className="text-sm text-gray-600">tsumugiは、既存のHR TechSaaSと連携し、彼らが持てない「関係性データ」を掛け合わせることで価値を生みます。</p>
+  </div>
+      {items.map(it => (
+        <Card key={it.k}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="text-base font-semibold">{it.label}</div>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${chip(it.status)}`}>{it.status==='linked'?'連携済み':'未連携'}</span>
+          </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-600">{it.sub}</div>
+            {it.status === 'unlinked' && <Button size="sm" variant="outline" className="mt-3">連携する</Button>}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
