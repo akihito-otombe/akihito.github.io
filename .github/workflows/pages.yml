@@ -2,7 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, preview ]
+    tags:
+      - 'v*'            # v1, v2, v1.1 など
   workflow_dispatch:
 
 permissions:
@@ -14,25 +16,54 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-env:
-  # リポジトリ名（例: tsumugi.io）。リネームしても自動で追随。
-  REPO_NAME: ${{ github.event.repository.name }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+
       - run: npm ci || npm i
-      # ここで base を /<repo>/ に固定（URL直下の404を防止）
-      - run: npm run build -- --base=/${{ env.REPO_NAME }}/
+
+      # すべてのビルド成果物を publish/ に集約
+      - name: Prepare publish dir
+        run: rm -rf publish && mkdir -p publish
+
+      # previewブランチ → /preview/
+      - name: Build preview
+        if: ${{ github.ref == 'refs/heads/preview' }}
+        run: |
+          BASE="/tsumugi.io/preview/"
+          npm run build -- --base="$BASE"
+          mkdir -p publish/preview
+          rsync -a dist/ publish/preview/
+
+      # mainブランチ → ルート( / ) と /latest/ を同時更新
+      - name: Build main (root & latest)
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          BASE="/tsumugi.io/"
+          npm run build -- --base="$BASE"
+          rsync -a dist/ publish/
+          mkdir -p publish/latest
+          rsync -a dist/ publish/latest/
+
+      # tag v* → /vX/ に固定公開
+      - name: Build tag (v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION="${GITHUB_REF_NAME}"         # 例: v1, v2.0
+          BASE="/tsumugi.io/${VERSION}/"
+          npm run build -- --base="$BASE"
+          mkdir -p "publish/${VERSION}"
+          rsync -a dist/ "publish/${VERSION}/"
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: publish
 
   deploy:
     needs: build
