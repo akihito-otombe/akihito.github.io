@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 任意: 追加のCSSがあればここに */
+html, body, #root { height: 100%; }
